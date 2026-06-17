@@ -1,11 +1,12 @@
 /**
  * Nutrition data module.
  *
- * A day's summary is built by combining the user's daily goals (config below)
- * with the actual logged totals for that day (from `dailyLog`). Goals are
- * static for now and will move to user settings later.
+ * A day's summary combines the user's daily goals with the actual logged totals
+ * for that day (from `dailyLog`). Goals come from `nutrition/goals` (manual
+ * override > active AI diet > defaults).
  */
 import { dayKey, getDayTotalsSync } from './dailyLog';
+import { getEffectiveGoals, MICRO_LAYOUT } from './goals';
 import { getDayWaterSync } from './waterLog';
 
 export interface MacroNutrient {
@@ -47,75 +48,31 @@ export interface NutritionSummary {
 }
 
 /**
- * Daily goals/targets. Static for now; will become per-user settings. Micro
- * labels/units intentionally match what we log (see DEFAULT_MICROS) so logged
- * amounts line up against these goals by label.
- */
-const GOALS = {
-  calories: 2200,
-  protein: 150,
-  carbs: 250,
-  fat: 70,
-  waterGoalMl: 2500,
-  microGroups: [
-    {
-      title: 'Carbohydrates',
-      items: [
-        { label: 'Fiber', goal: 30, unit: 'g' },
-        { label: 'Sugars', goal: 50, unit: 'g' },
-      ],
-    },
-    {
-      title: 'Fats',
-      items: [
-        { label: 'Saturated Fat', goal: 20, unit: 'g' },
-        { label: 'Cholesterol', goal: 300, unit: 'mg' },
-      ],
-    },
-    {
-      title: 'Minerals',
-      items: [
-        { label: 'Sodium', goal: 2300, unit: 'mg' },
-        { label: 'Potassium', goal: 3500, unit: 'mg' },
-        { label: 'Calcium', goal: 1000, unit: 'mg' },
-        { label: 'Iron', goal: 18, unit: 'mg' },
-      ],
-    },
-    {
-      title: 'Vitamins',
-      items: [
-        { label: 'Vitamin C', goal: 90, unit: 'mg' },
-        { label: 'Vitamin D', goal: 20, unit: 'mcg' },
-      ],
-    },
-  ],
-} as const;
-
-/**
- * Build the nutrition summary for a given day ("YYYY-MM-DD") from goals + that
- * day's logged totals. Empty days come back as all-zero consumption against the
- * goals. Requires `ensureLogLoaded()` to have resolved first.
+ * Build the nutrition summary for a given day ("YYYY-MM-DD") from the effective
+ * goals + that day's logged totals. Empty days come back as all-zero consumption
+ * against the goals. Requires `ensureLogLoaded()` and `ensureGoalsLoaded()`.
  */
 export function buildDaySummary(day: string = dayKey()): NutritionSummary {
   const totals = getDayTotalsSync(day);
   const consumed = new Map(totals.micros.map((m) => [m.label, m.amount]));
+  const goals = getEffectiveGoals();
 
   return {
     calories: totals.calories,
-    caloriesGoal: GOALS.calories,
-    protein: { grams: totals.protein, goalGrams: GOALS.protein },
-    carbs: { grams: totals.carbs, goalGrams: GOALS.carbs },
-    fats: { grams: totals.fat, goalGrams: GOALS.fat },
-    microGroups: GOALS.microGroups.map((g) => ({
+    caloriesGoal: goals.calories,
+    protein: { grams: totals.protein, goalGrams: goals.protein },
+    carbs: { grams: totals.carbs, goalGrams: goals.carbs },
+    fats: { grams: totals.fat, goalGrams: goals.fat },
+    microGroups: MICRO_LAYOUT.map((g) => ({
       title: g.title,
       items: g.items.map((it) => ({
         label: it.label,
         amount: consumed.get(it.label) ?? 0,
-        goal: it.goal,
+        goal: goals.micros[it.label] ?? 0,
         unit: it.unit,
       })),
     })),
     waterMl: getDayWaterSync(day),
-    waterGoalMl: GOALS.waterGoalMl,
+    waterGoalMl: goals.waterMl,
   };
 }

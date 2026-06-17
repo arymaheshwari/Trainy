@@ -25,6 +25,7 @@ export function CalendarModal({
   selectedDay,
   markedDays,
   minDay,
+  accent = colors.orange,
   onSelect,
   onClose,
 }: {
@@ -34,6 +35,8 @@ export function CalendarModal({
   markedDays: Set<string>;
   /** Earliest selectable day (retention floor). */
   minDay: string;
+  /** Accent for the selected/today highlight (defaults to the nutrition orange). */
+  accent?: string;
   onSelect: (day: string) => void;
   onClose: () => void;
 }) {
@@ -111,7 +114,13 @@ export function CalendarModal({
                     onClose();
                   }}
                 >
-                  <View style={[styles.dayCircle, isSelected && styles.daySelected, isToday && !isSelected && styles.dayToday]}>
+                  <View
+                    style={[
+                      styles.dayCircle,
+                      isSelected && [styles.daySelected, { backgroundColor: accent }],
+                      isToday && !isSelected && [styles.dayToday, { borderColor: accent }],
+                    ]}
+                  >
                     <Text
                       style={[
                         styles.dayText,

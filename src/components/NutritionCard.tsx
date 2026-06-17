@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { buildDaySummary, MacroNutrient, NutritionSummary } from '../api/nutrition';
 import { dayKey, ensureLogLoaded } from '../api/nutrition/dailyLog';
+import { ensureGoalsLoaded } from '../api/nutrition/goals';
 import { colors, fontSize, radius, spacing } from '../theme';
 
 const NUTRITION_ACCENT = colors.orange;
@@ -21,9 +23,13 @@ const MACROS = [
 export function NutritionCard() {
   const [nutrition, setNutrition] = useState<NutritionSummary | null>(null);
 
-  useEffect(() => {
-    ensureLogLoaded().then(() => setNutrition(buildDaySummary(dayKey())));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      Promise.all([ensureLogLoaded(), ensureGoalsLoaded()]).then(() =>
+        setNutrition(buildDaySummary(dayKey())),
+      );
+    }, []),
+  );
 
   return (
     <View style={styles.card}>

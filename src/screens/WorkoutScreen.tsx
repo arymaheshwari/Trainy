@@ -9,26 +9,38 @@ import {
   getRoutinesSync,
   Routine,
 } from '../api/workouts/routines';
+import {
+  dayKey,
+  dayKeyOffset,
+  ensureWorkoutLogLoaded,
+  getLoggedWorkoutDaysSync,
+  getWorkoutsForDaySync,
+  removeWorkout,
+  WorkoutLogEntry,
+} from '../api/workouts/workoutLog';
+import { ActiveWorkoutModal } from '../components/ActiveWorkoutModal';
+import { CalendarModal } from '../components/CalendarModal';
 import { CreateRoutineModal } from '../components/CreateRoutineModal';
+import { LoggedWorkoutCard } from '../components/LoggedWorkoutCard';
 import { RoutineActionsMenu } from '../components/RoutineActionsMenu';
 import { RoutineCard } from '../components/RoutineCard';
 import { StartWorkoutCard } from '../components/StartWorkoutCard';
 import { TAB_BAR_HEIGHT } from '../navigation/constants';
 import { colors, fontSize, radius, spacing } from '../theme';
 
-/** Sample routine shown until the user saves their own, so the list isn't empty. */
-const PLACEHOLDER_ROUTINE: Routine = {
-  id: 'placeholder',
-  name: 'Push Day',
-  createdAt: 0,
-  exercises: [
-    { id: 'p1', name: 'Bench Press', sets: 4 },
-    { id: 'p2', name: 'Overhead Press', sets: 3 },
-    { id: 'p3', name: 'Incline Dumbbell Press', sets: 3 },
-    { id: 'p4', name: 'Tricep Pushdown', sets: 3 },
-    { id: 'p5', name: 'Lateral Raise', sets: 3 },
-  ],
-};
+const MIN_DAY = dayKeyOffset(-365);
+
+/** Human label for a day pill: "Today" / "Yesterday" / "Mon, Jun 16". */
+function dayLabel(day: string): string {
+  if (day === dayKey()) return 'Today';
+  if (day === dayKeyOffset(-1)) return 'Yesterday';
+  const [y, m, d] = day.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+}
 
 /** Workout tracker: start sessions and review training history. */
 export function WorkoutScreen() {
@@ -37,18 +49,24 @@ export function WorkoutScreen() {
   const [editorVisible, setEditorVisible] = useState(false);
   const [editorRoutine, setEditorRoutine] = useState<Routine | undefined>(undefined);
   const [menuRoutine, setMenuRoutine] = useState<Routine | null>(null);
+  const [workoutOpen, setWorkoutOpen] = useState(false);
+  const [activeRoutine, setActiveRoutine] = useState<Routine | null>(null);
+
+  const [selectedDay, setSelectedDay] = useState(dayKey());
+  const [dayWorkouts, setDayWorkouts] = useState<WorkoutLogEntry[]>([]);
+  const [markedDays, setMarkedDays] = useState<Set<string>>(new Set());
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const refresh = useCallback(async () => {
-    await ensureRoutinesLoaded();
+    await Promise.all([ensureRoutinesLoaded(), ensureWorkoutLogLoaded()]);
     setRoutines([...getRoutinesSync()]);
-  }, []);
+    setDayWorkouts(getWorkoutsForDaySync(selectedDay));
+    setMarkedDays(new Set(getLoggedWorkoutDaysSync()));
+  }, [selectedDay]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
-
-  const hasRoutines = routines.length > 0;
-  const displayedRoutines = hasRoutines ? routines : [PLACEHOLDER_ROUTINE];
 
   const openCreate = () => {
     setEditorRoutine(undefined);
@@ -59,6 +77,16 @@ export function WorkoutScreen() {
     setEditorRoutine(menuRoutine ?? undefined);
     setMenuRoutine(null);
     setEditorVisible(true);
+  };
+
+  const startEmpty = () => {
+    setActiveRoutine(null);
+    setWorkoutOpen(true);
+  };
+
+  const startRoutine = (routine: Routine) => {
+    setActiveRoutine(routine);
+    setWorkoutOpen(true);
   };
 
   const confirmDelete = () => {
@@ -91,7 +119,7 @@ export function WorkoutScreen() {
         <Text style={styles.title}>Workout</Text>
       </View>
 
-      <StartWorkoutCard />
+      <StartWorkoutCard onPress={startEmpty} />
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -100,15 +128,52 @@ export function WorkoutScreen() {
             <Ionicons name="add" size={22} color={colors.textPrimary} />
           </Pressable>
         </View>
-        <View style={styles.list}>
-          {displayedRoutines.map((routine) => (
-            <RoutineCard
-              key={routine.id}
-              routine={routine}
-              onEdit={hasRoutines ? () => setMenuRoutine(routine) : undefined}
-            />
-          ))}
+        {routines.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>No routines yet</Text>
+            <Text style={styles.emptySubtitle}>
+              Tap + to save a workout you can start anytime.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.list}>
+            {routines.map((routine) => (
+              <RoutineCard
+                key={routine.id}
+                routine={routine}
+                onStart={() => startRoutine(routine)}
+                onEdit={() => setMenuRoutine(routine)}
+              />
+            ))}
+          </View>
+        )}
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>History</Text>
+          <Pressable style={styles.dayPill} onPress={() => setCalendarOpen(true)}>
+            <Ionicons name="calendar-outline" size={16} color={colors.textPrimary} />
+            <Text style={styles.dayPillText}>{dayLabel(selectedDay)}</Text>
+            <Ionicons name="chevron-down" size={14} color={colors.textTertiary} />
+          </Pressable>
         </View>
+        {dayWorkouts.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>No workouts logged</Text>
+            <Text style={styles.emptySubtitle}>Finished workouts for this day show up here.</Text>
+          </View>
+        ) : (
+          <View style={styles.list}>
+            {dayWorkouts.map((workout) => (
+              <LoggedWorkoutCard
+                key={workout.id}
+                workout={workout}
+                onRemove={() => removeWorkout(selectedDay, workout.id).then(refresh)}
+              />
+            ))}
+          </View>
+        )}
       </View>
 
       <CreateRoutineModal
@@ -122,6 +187,24 @@ export function WorkoutScreen() {
         onEdit={openEdit}
         onDelete={confirmDelete}
         onClose={() => setMenuRoutine(null)}
+      />
+      <ActiveWorkoutModal
+        visible={workoutOpen}
+        routine={activeRoutine}
+        onFinished={() => {
+          setSelectedDay(dayKey());
+          refresh();
+        }}
+        onClose={() => setWorkoutOpen(false)}
+      />
+      <CalendarModal
+        visible={calendarOpen}
+        selectedDay={selectedDay}
+        markedDays={markedDays}
+        minDay={MIN_DAY}
+        accent={colors.teal}
+        onSelect={setSelectedDay}
+        onClose={() => setCalendarOpen(false)}
       />
     </ScrollView>
   );
@@ -170,7 +253,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  dayPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+  },
+  dayPillText: {
+    color: colors.textPrimary,
+    fontSize: fontSize.body,
+    fontWeight: '700',
+  },
   list: {
     gap: spacing.md,
+  },
+  emptyCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.xl,
+    alignItems: 'center',
+  },
+  emptyTitle: {
+    color: colors.textPrimary,
+    fontSize: fontSize.subtitle,
+    fontWeight: '700',
+  },
+  emptySubtitle: {
+    color: colors.textSecondary,
+    fontSize: fontSize.body,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: spacing.xs,
   },
 });

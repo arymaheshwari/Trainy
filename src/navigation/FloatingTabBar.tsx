@@ -8,10 +8,10 @@ import { TAB_BAR_HEIGHT, TAB_BAR_MARGIN } from './constants';
 
 /** Icon (base name) per route. Outline variant is shown when not focused. */
 const ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  Summary: 'home',
+  Home: 'home',
   Nutrition: 'nutrition',
   Workout: 'barbell',
-  Recovery: 'battery-charging',
+  Progress: 'trending-up',
 };
 
 /**

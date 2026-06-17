@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { buildDaySummary, NutritionSummary } from '../api/nutrition';
+import { ensureGoalsLoaded } from '../api/nutrition/goals';
 import {
   dayKey,
   dayKeyOffset,
@@ -22,6 +24,7 @@ import { CalorieSummaryCard } from '../components/CalorieSummaryCard';
 import { FoodSearchModal } from '../components/FoodSearchModal';
 import { LoggedFoodsCard } from '../components/LoggedFoodsCard';
 import { MicronutrientsCard } from '../components/MicronutrientsCard';
+import { NutritionGoalsModal } from '../components/NutritionGoalsModal';
 import { PantryModal } from '../components/PantryModal';
 import { PhotoFoodModal } from '../components/PhotoFoodModal';
 import { WaterCard } from '../components/WaterCard';
@@ -52,6 +55,7 @@ export function NutritionScreen() {
   const [markedDays, setMarkedDays] = useState<Set<string>>(new Set());
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [goalsOpen, setGoalsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
@@ -61,15 +65,18 @@ export function NutritionScreen() {
   const [pantryOpen, setPantryOpen] = useState(false);
 
   const refresh = useCallback(async () => {
-    await Promise.all([ensureLogLoaded(), ensureWaterLoaded()]);
+    await Promise.all([ensureLogLoaded(), ensureWaterLoaded(), ensureGoalsLoaded()]);
     setNutrition(buildDaySummary(selectedDay));
     setEntries(getDayEntriesSync(selectedDay));
     setMarkedDays(new Set(getLoggedDaysSync()));
   }, [selectedDay]);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  // Re-pull on focus so goal changes (e.g. a new diet plan) show immediately.
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
 
   return (
     <ScrollView
@@ -85,9 +92,19 @@ export function NutritionScreen() {
     >
       <View style={styles.header}>
         <Text style={styles.title}>Nutrition</Text>
-        <Pressable style={styles.addButton} onPress={() => setMenuOpen(true)} hitSlop={8}>
-          <Ionicons name="add" size={26} color={colors.textPrimary} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            style={styles.addButton}
+            onPress={() => setGoalsOpen(true)}
+            hitSlop={8}
+            accessibilityLabel="Edit goals"
+          >
+            <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
+          </Pressable>
+          <Pressable style={styles.addButton} onPress={() => setMenuOpen(true)} hitSlop={8}>
+            <Ionicons name="add" size={26} color={colors.textPrimary} />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.pillRow}>
@@ -177,6 +194,11 @@ export function NutritionScreen() {
         }}
       />
       <PantryModal visible={pantryOpen} onClose={() => setPantryOpen(false)} />
+      <NutritionGoalsModal
+        visible={goalsOpen}
+        onClose={() => setGoalsOpen(false)}
+        onSaved={refresh}
+      />
     </ScrollView>
   );
 }
@@ -195,6 +217,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: spacing.xs,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   title: {
     color: colors.textPrimary,
