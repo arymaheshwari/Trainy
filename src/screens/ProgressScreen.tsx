@@ -82,18 +82,17 @@ export function ProgressScreen() {
             style={({ pressed }) => [styles.iconButton, pressed && styles.planButtonPressed]}
             onPress={() => setGoalsOpen(true)}
             accessibilityRole="button"
-            accessibilityLabel="Edit goals"
+            accessibilityLabel="Manually edit goals"
           >
             <Ionicons name="create-outline" size={18} color={colors.primary} />
           </Pressable>
           <Pressable
-            style={({ pressed }) => [styles.planButton, pressed && styles.planButtonPressed]}
+            style={({ pressed }) => [styles.aiButton, pressed && styles.planButtonPressed]}
             onPress={openPlan}
             accessibilityRole="button"
-            accessibilityLabel={hasPlan ? 'Edit plan' : 'Make a plan'}
+            accessibilityLabel={hasPlan ? 'Edit AI plan' : 'Make an AI plan'}
           >
-            <Ionicons name={hasPlan ? 'create-outline' : 'add'} size={16} color={colors.primary} />
-            <Text style={styles.planButtonText}>{hasPlan ? 'Edit plan' : 'Make a plan'}</Text>
+            <Ionicons name="sparkles" size={18} color={colors.textPrimary} />
           </Pressable>
         </View>
       </View>
@@ -162,28 +161,23 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   iconButton: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(124, 92, 255, 0.15)',
   },
-  planButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+  // AI plan button — solid accent circle (echoes the Nutrition AI lookup).
+  aiButton: {
+    width: 40,
+    height: 40,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(124, 92, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
   },
   planButtonPressed: {
     opacity: 0.7,
-  },
-  planButtonText: {
-    color: colors.primary,
-    fontSize: fontSize.body,
-    fontWeight: '700',
   },
 });

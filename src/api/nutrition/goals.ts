@@ -24,26 +24,49 @@ export interface NutritionGoals {
 export interface MicroLayoutItem {
   label: string;
   unit: string;
+  /** FDA Daily Value (label reference, 2,000 kcal diet) — the healthy daily amount. */
+  fda: number;
 }
 export interface MicroLayoutGroup {
   title: string;
   items: MicroLayoutItem[];
 }
 
-/** Display structure for micros (which labels, grouped how, with what units). */
+/**
+ * Display structure for micros (labels, grouping, units) plus the FDA Daily
+ * Value for each — shown as a healthy-daily reference, not a tolerable maximum.
+ */
 export const MICRO_LAYOUT: MicroLayoutGroup[] = [
-  { title: 'Carbohydrates', items: [{ label: 'Fiber', unit: 'g' }, { label: 'Sugars', unit: 'g' }] },
-  { title: 'Fats', items: [{ label: 'Saturated Fat', unit: 'g' }, { label: 'Cholesterol', unit: 'mg' }] },
+  {
+    title: 'Carbohydrates',
+    items: [
+      { label: 'Fiber', unit: 'g', fda: 28 },
+      { label: 'Sugars', unit: 'g', fda: 50 },
+    ],
+  },
+  {
+    title: 'Fats',
+    items: [
+      { label: 'Saturated Fat', unit: 'g', fda: 20 },
+      { label: 'Cholesterol', unit: 'mg', fda: 300 },
+    ],
+  },
   {
     title: 'Minerals',
     items: [
-      { label: 'Sodium', unit: 'mg' },
-      { label: 'Potassium', unit: 'mg' },
-      { label: 'Calcium', unit: 'mg' },
-      { label: 'Iron', unit: 'mg' },
+      { label: 'Sodium', unit: 'mg', fda: 2300 },
+      { label: 'Potassium', unit: 'mg', fda: 4700 },
+      { label: 'Calcium', unit: 'mg', fda: 1300 },
+      { label: 'Iron', unit: 'mg', fda: 18 },
     ],
   },
-  { title: 'Vitamins', items: [{ label: 'Vitamin C', unit: 'mg' }, { label: 'Vitamin D', unit: 'mcg' }] },
+  {
+    title: 'Vitamins',
+    items: [
+      { label: 'Vitamin C', unit: 'mg', fda: 90 },
+      { label: 'Vitamin D', unit: 'mcg', fda: 20 },
+    ],
+  },
 ];
 
 export const DEFAULT_GOALS: NutritionGoals = {

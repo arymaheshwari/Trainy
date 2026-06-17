@@ -4,18 +4,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, fontSize, radius, spacing } from '../theme';
 
-type Method = 'ai' | 'photo' | 'barcode' | 'search';
+type Method = 'ai' | 'photo' | 'label' | 'barcode' | 'search';
 
 const OPTIONS: { key: Method; label: string; icon: keyof typeof Ionicons.glyphMap; color: string }[] = [
   { key: 'ai', label: 'AI', icon: 'sparkles', color: colors.primary },
   { key: 'photo', label: 'Photo', icon: 'camera', color: colors.orange },
+  { key: 'label', label: 'Label', icon: 'document-text-outline', color: colors.amber },
   { key: 'barcode', label: 'Barcode', icon: 'barcode-outline', color: colors.teal },
   { key: 'search', label: 'Search', icon: 'search', color: colors.blue },
 ];
 
 /**
  * Bottom-sheet menu for starting food tracking. Presents circular method
- * buttons — AI, Photo, Barcode, Search. `onSelect` fires with the chosen method.
+ * buttons — AI, Photo, Label, Barcode, Search. `onSelect` fires with the method.
  */
 export function AddFoodMenu({
   visible,
@@ -89,9 +90,11 @@ const styles = StyleSheet.create({
   },
   options: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexWrap: 'wrap',
+    rowGap: spacing.xl,
   },
   option: {
+    width: '33.33%',
     alignItems: 'center',
     gap: spacing.sm,
   },

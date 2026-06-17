@@ -11,8 +11,9 @@
  *  - custom: user-added food
  *  - barcode: scanned product (Open Food Facts)
  *  - ai: AI-generated from a description
+ *  - label: scanned Nutrition Facts label
  */
-export type FoodSource = 'usda' | 'custom' | 'barcode' | 'ai';
+export type FoodSource = 'usda' | 'custom' | 'barcode' | 'ai' | 'label';
 
 /** Points the detail sheet at a specific food to resolve and display. */
 export type FoodTarget =

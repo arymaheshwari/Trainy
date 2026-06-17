@@ -22,6 +22,7 @@ import { BarcodeScannerModal } from '../components/BarcodeScannerModal';
 import { CalendarModal } from '../components/CalendarModal';
 import { CalorieSummaryCard } from '../components/CalorieSummaryCard';
 import { FoodSearchModal } from '../components/FoodSearchModal';
+import { LabelScanModal } from '../components/LabelScanModal';
 import { LoggedFoodsCard } from '../components/LoggedFoodsCard';
 import { MicronutrientsCard } from '../components/MicronutrientsCard';
 import { NutritionGoalsModal } from '../components/NutritionGoalsModal';
@@ -60,6 +61,7 @@ export function NutritionScreen() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
+  const [labelOpen, setLabelOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [makeOpen, setMakeOpen] = useState(false);
   const [pantryOpen, setPantryOpen] = useState(false);
@@ -151,6 +153,7 @@ export function NutritionScreen() {
           else if (method === 'barcode') setScannerOpen(true);
           else if (method === 'ai') setAiOpen(true);
           else if (method === 'photo') setPhotoOpen(true);
+          else if (method === 'label') setLabelOpen(true);
         }}
       />
       <FoodSearchModal
@@ -175,6 +178,12 @@ export function NutritionScreen() {
         visible={photoOpen}
         day={selectedDay}
         onClose={() => setPhotoOpen(false)}
+        onLogged={refresh}
+      />
+      <LabelScanModal
+        visible={labelOpen}
+        day={selectedDay}
+        onClose={() => setLabelOpen(false)}
         onLogged={refresh}
       />
       <CalendarModal

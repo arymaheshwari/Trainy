@@ -87,37 +87,57 @@ export function NutritionGoalsModal({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {goals && (
-            <>
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Daily targets</Text>
-                {MACRO_ROWS.map((r) => (
-                  <NumRow
-                    key={r.key}
-                    label={r.label}
-                    unit={r.unit}
-                    value={goals[r.key]}
-                    onChange={(v) => setMacro(r.key, v)}
-                  />
-                ))}
-              </View>
+          {goals &&
+            (() => {
+              const macroKcal = round(goals.protein * 4 + goals.carbs * 4 + goals.fat * 9);
+              const matches = Math.abs(macroKcal - goals.calories) <= 25;
+              return (
+                <>
+                  <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Daily targets</Text>
+                    {MACRO_ROWS.map((r) => (
+                      <NumRow
+                        key={r.key}
+                        label={r.label}
+                        unit={r.unit}
+                        value={goals[r.key]}
+                        onChange={(v) => setMacro(r.key, v)}
+                      />
+                    ))}
+                    <Pressable
+                      style={styles.calcRow}
+                      disabled={matches}
+                      onPress={() => setMacro('calories', macroKcal)}
+                    >
+                      <Text style={styles.calcLabel}>Macros add up to</Text>
+                      <Text style={[styles.calcValue, { color: matches ? colors.teal : colors.amber }]}>
+                        {macroKcal} kcal{matches ? '' : ' · tap to match'}
+                      </Text>
+                    </Pressable>
+                  </View>
 
-              {MICRO_LAYOUT.map((group) => (
-                <View key={group.title} style={styles.card}>
-                  <Text style={styles.cardTitle}>{group.title}</Text>
-                  {group.items.map((it) => (
-                    <NumRow
-                      key={it.label}
-                      label={it.label}
-                      unit={it.unit}
-                      value={goals.micros[it.label] ?? 0}
-                      onChange={(v) => setMicro(it.label, v)}
-                    />
+                  <Text style={styles.fdaNote}>
+                    Micro targets — FDA Daily Values shown as a healthy daily reference.
+                  </Text>
+
+                  {MICRO_LAYOUT.map((group) => (
+                    <View key={group.title} style={styles.card}>
+                      <Text style={styles.cardTitle}>{group.title}</Text>
+                      {group.items.map((it) => (
+                        <NumRow
+                          key={it.label}
+                          label={it.label}
+                          unit={it.unit}
+                          value={goals.micros[it.label] ?? 0}
+                          onChange={(v) => setMicro(it.label, v)}
+                          hint={`FDA ${it.fda} ${it.unit}`}
+                        />
+                      ))}
+                    </View>
                   ))}
-                </View>
-              ))}
-            </>
-          )}
+                </>
+              );
+            })()}
         </ScrollView>
 
         <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
@@ -135,15 +155,20 @@ function NumRow({
   unit,
   value,
   onChange,
+  hint,
 }: {
   label: string;
   unit: string;
   value: number;
   onChange: (v: number) => void;
+  hint?: string;
 }) {
   return (
     <View style={styles.numRow}>
-      <Text style={styles.numLabel}>{label}</Text>
+      <View style={styles.numLabelWrap}>
+        <Text style={styles.numLabel}>{label}</Text>
+        {hint ? <Text style={styles.numHint}>{hint}</Text> : null}
+      </View>
       <View style={styles.numInputWrap}>
         <TextInput
           style={styles.numInput}
@@ -206,10 +231,41 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
+  numLabelWrap: {
+    flex: 1,
+    paddingRight: spacing.md,
+  },
   numLabel: {
     color: colors.textPrimary,
     fontSize: fontSize.body,
     fontWeight: '600',
+  },
+  numHint: {
+    color: colors.textTertiary,
+    fontSize: fontSize.caption,
+    fontWeight: '600',
+    marginTop: 1,
+  },
+  calcRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: spacing.md,
+  },
+  calcLabel: {
+    color: colors.textSecondary,
+    fontSize: fontSize.body,
+    fontWeight: '600',
+  },
+  calcValue: {
+    fontSize: fontSize.body,
+    fontWeight: '800',
+  },
+  fdaNote: {
+    color: colors.textTertiary,
+    fontSize: fontSize.caption,
+    fontWeight: '600',
+    paddingHorizontal: spacing.xs,
   },
   numInputWrap: {
     flexDirection: 'row',
