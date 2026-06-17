@@ -5,9 +5,15 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0E0E14",
+    "splash": {
+      "backgroundColor": "#0E0E14",
+      "resizeMode": "contain"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "backgroundColor": "#0E0E14"
     },
     "android": {
       "adaptiveIcon": {
@@ -20,6 +26,22 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos so you can scan a nutrition label.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to use the camera so you can scan a nutrition label."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to use the camera so you can scan barcodes."
+        }
+      ]
+    ]
   }
 }

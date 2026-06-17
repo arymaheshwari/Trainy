@@ -31,7 +31,10 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo
@@ -39,3 +42,17 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Claude
+CLAUDE.md
+AGENTS.md
+.claude
+.claude/
+.plan
+.plan/
+plans/
+
+# Supabase (CLI local state — keep secrets/local linkage out of git)
+supabase/.temp/
+supabase/.branches/
+supabase/.env
